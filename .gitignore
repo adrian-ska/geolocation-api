@@ -1,0 +1,29 @@
+# 🛑 Ignore macOS system files
+.DS_Store
+
+# 🛑 Ignore environment configuration files
+.env
+
+# 🛑 Ignore IDE configuration files (PyCharm, VS Code, etc.)
+.idea/
+.vscode/
+
+# 🛑 Ignore SQLite database file (if using another database, remove this)
+geolocation.db
+
+# 🛑 Ignore virtual environment directories
+venv/
+.venv/
+
+# 🛑 Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 🛑 Ignore log files and temporary files
+logs/
+*.log
+*.swp
+*.swo
+*.swn
