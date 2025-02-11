@@ -30,7 +30,7 @@ A FastAPI-based service that allows users to store, retrieve, and delete geoloca
 ### 1️⃣ Clone the repository
 
 ```sh
-git clone https://github.com/your-username/geolocation-api.git
+git clone https://github.com/adrian-ska/geolocation-api.git
 cd geolocation-api
 ```
 
