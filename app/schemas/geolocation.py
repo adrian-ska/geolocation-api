@@ -4,49 +4,41 @@ import tldextract
 
 
 class GeoRequest(BaseModel):
-    """
-    Schema for validating an IP address or domain name.
-    Ensures that the input is either a valid IP or a domain without a protocol.
-    """
+    """Validates an IP address or domain name."""
+
     ip_or_url: str | IPvAnyAddress = Field(..., description="IP address or domain name")
 
     @staticmethod
     def clean_protocol(value: str) -> str:
-        """
-        Removes protocol prefixes (http, https, ftp) from the input string.
-        """
+        """Removes http, https, or ftp from the input string."""
         PROHIBITED_PROTOCOLS = ("http://", "https://", "ftp://")
         for protocol in PROHIBITED_PROTOCOLS:
             if value.startswith(protocol):
-                return value[len(protocol):]  # Remove the protocol part
+                return value[len(protocol):]  # Remove the protocol
         return value
 
     @field_validator("ip_or_url", mode="before")
     @classmethod
     def validate_ip_or_url(cls, value: str) -> str:
-        """
-        Validates the provided IP or domain name.
-        - Removes protocols if present.
-        - Accepts valid IPv4/IPv6 addresses.
-        - Ensures the domain contains at least a valid root domain and suffix.
-        """
-        value = cls.clean_protocol(value)  # Remove protocol if exists
+        """Ensures the value is a valid IP or domain without a protocol."""
+        value = cls.clean_protocol(value)  # Remove protocol if present
 
-        # If the value is a valid IP, return it
+        # If it's a valid IP, return it
         try:
             ip_address = IPvAnyAddress(value)
             return str(ip_address)
         except ValueError:
-            # If not an IP, validate domain name
+            # If not an IP, check if it's a valid domain
             extracted = tldextract.extract(value)
             if extracted.domain and extracted.suffix:
-                return value.lower()  # Normalize to lowercase
+                return value.lower()  # Convert to lowercase
 
-        raise ValueError(f"Invalid input format: {value}")
+        raise ValueError(f"Invalid IP or domain: {value}")
 
 
 class GeoLocationResponse(BaseModel):
-    """Schema for returning geolocation data."""
+    """Response schema for geolocation data."""
+
     id: int
     ip_or_url: str
     country: str | None = None
@@ -57,7 +49,8 @@ class GeoLocationResponse(BaseModel):
 
 
 class GeoLocationSerializer(BaseModel):
-    """Schema for serializing geolocation data before saving to the database."""
+    """Schema for saving geolocation data in the database."""
+
     ip_or_url: str
     country: str | None = None
     region: str | None = None

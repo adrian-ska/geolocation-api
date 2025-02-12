@@ -19,7 +19,7 @@ GET http://127.0.0.1:8000/geolocation?ip_or_url=8.8.8.8
 Content-Type: application/json
 
 ### Fetch by ID (GET)
-GET http://127.0.0.1:8000/geolocation?id=4
+GET http://127.0.0.1:8000/geolocation?id=2
 Content-Type: application/json
 
 ### Fetch all(GET)
