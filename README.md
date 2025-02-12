@@ -59,7 +59,7 @@ BASE_URL=http://api.ipstack.com
 Alternatively, if a `env.example` file is provided, you can copy it:
 
 ```sh
-mv .env.example .env  # On Linux/macOS
+mv env.example .env  # On Linux/macOS
 ```
 
 Then, update the `.env` file with your actual database credentials and API key.
