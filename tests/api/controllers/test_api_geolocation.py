@@ -1,6 +1,8 @@
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
+
+from app.clients.ipstack import IPStackClient
 from app.main import app
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch
@@ -126,3 +128,39 @@ async def test_get_geolocation_by_id(mock_ipstack, async_client):
     assert "country" in data
     assert isinstance(data["latitude"], float)
     assert isinstance(data["longitude"], float)
+
+
+@pytest.mark.asyncio
+@patch("app.clients.ipstack.IPStackClient.fetch_geolocation", new_callable=AsyncMock)
+async def test_fetch_geolocation_invalid_api_key(mock_fetch):
+    """Test case for when the API returns an invalid API key error."""
+    mock_fetch.return_value = {"success": False, "error": {"code": 101, "info": "Invalid API key"}}
+
+    response = await IPStackClient.fetch_geolocation("8.8.8.8")
+
+    assert response["success"] is False
+    assert response["error"]["code"] == 101
+
+
+@pytest.mark.asyncio
+@patch("app.clients.ipstack.IPStackClient.fetch_geolocation", new_callable=AsyncMock)
+async def test_fetch_geolocation_rate_limit(mock_fetch):
+    """Test case for when the API returns a rate limit exceeded error."""
+    mock_fetch.return_value = {"success": False, "error": {"code": 104, "info": "Monthly quota exceeded"}}
+
+    response = await IPStackClient.fetch_geolocation("8.8.8.8")
+
+    assert response["success"] is False
+    assert response["error"]["code"] == 104
+
+
+@pytest.mark.asyncio
+@patch("app.clients.ipstack.IPStackClient.fetch_geolocation", new_callable=AsyncMock)
+async def test_fetch_geolocation_server_error(mock_fetch):
+    """Test case for when the API returns a 500 Internal Server Error."""
+    mock_fetch.side_effect = Exception("500 Internal Server Error")  # Simulating a server-side failure
+
+    with pytest.raises(Exception) as exc_info:
+        await IPStackClient.fetch_geolocation("8.8.8.8")
+
+    assert "500 Internal Server Error" in str(exc_info.value)

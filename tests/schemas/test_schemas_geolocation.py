@@ -27,6 +27,7 @@ def test_valid_ip_or_url(valid_value, expected):
         "256.256.256.256",  # IP segments exceed the valid limit
         "invalid_url",  # Invalid domain name format
         "just_random_text",  # Neither an IP nor a valid domain
+        " "                 # empty url
     ],
 )
 def test_invalid_ip_or_url(invalid_value):
