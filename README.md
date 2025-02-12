@@ -56,7 +56,7 @@ LOGGER_LEVEL=INFO
 BASE_URL=http://api.ipstack.com
 ```
 
-Alternatively, if a `.env.example` file is provided, you can copy it:
+Alternatively, if a `env.example` file is provided, you can copy it:
 
 ```sh
 mv .env.example .env  # On Linux/macOS
