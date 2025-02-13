@@ -1,6 +1,7 @@
 from typing import List, Union
 
 from fastapi import Depends, HTTPException, APIRouter
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.geolocation import (
@@ -23,14 +24,16 @@ router = APIRouter()
                          "If the IP or URL already exists, returns HTTP 409 Conflict."
              )
 async def add_geolocation(request: GeoRequest, db: AsyncSession = Depends(database.get_db)):
-    existing_entry = await get_geolocation_by_ip_or_url(db, ip_or_url=request.ip_or_url)
-    if existing_entry:
-        raise HTTPException(status_code=409, detail="Geolocation record already exists")
-    data = await get_geolocation(request)
-    if not data:
-        raise HTTPException(status_code=400, detail="Invalid IP address or URL")
-    return await create_geolocation(db, data)
-
+    try:
+        existing_entry = await get_geolocation_by_ip_or_url(db, ip_or_url=request.ip_or_url)
+        if existing_entry:
+            raise HTTPException(status_code=409, detail="Geolocation record already exists")
+        data = await get_geolocation(request)
+        if not data:
+            raise HTTPException(status_code=400, detail="Invalid IP address or URL")
+        return await create_geolocation(db, data)
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="Database service is unavailable")
 
 @router.get("/geolocation", response_model=Union[List[GeoLocationResponse], GeoLocationResponse],
             summary="Retrieve geolocation data",
@@ -43,20 +46,24 @@ async def get_geolocation_data(
         ip_or_url: str | None = None,
         db: AsyncSession = Depends(database.get_db),
 ):
-    if id and ip_or_url:
-        raise HTTPException(status_code=400, detail="Provide either id or ip_or_url, not both.")
+    try:
+        if id and ip_or_url:
+            raise HTTPException(status_code=400, detail="Provide either id or ip_or_url, not both.")
 
-    if id:
-        data = await get_geolocation_by_id(db, id)
-    elif ip_or_url:
-        data = await get_geolocation_by_ip_or_url(db, ip_or_url)
-    else:
-        return await get_all_geolocations(db)
+        if id:
+            data = await get_geolocation_by_id(db, id)
+        elif ip_or_url:
+            data = await get_geolocation_by_ip_or_url(db, ip_or_url)
+        else:
+            return await get_all_geolocations(db)
 
-    if not data:
-        raise HTTPException(status_code=404, detail="Data not found")
+        if not data:
+            raise HTTPException(status_code=404, detail="Data not found")
 
-    return data
+        return data
+
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="Database service is unavailable")
 
 
 @router.delete("/geolocation/{id}",
@@ -65,7 +72,11 @@ async def get_geolocation_data(
                            "Returns a success message if the deletion was successful."
                )
 async def delete_geolocation(db: AsyncSession = Depends(database.get_db), id: int = None):
-    deleted = await delete_geolocation_db(db=db, id=id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Data not found")
-    return {"message": "Successfully deleted"}
+    try:
+        deleted = await delete_geolocation_db(db=db, id=id)
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Data not found")
+        return {"message": "Successfully deleted"}
+
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="Database service is unavailable")
