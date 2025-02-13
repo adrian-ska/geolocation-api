@@ -20,17 +20,15 @@ router = APIRouter()
 @router.post("/geolocation", response_model=GeoLocationResponse,
              summary="Add a geolocation record",
              description="Fetches geolocation data from an external API and stores it in the database. "
-                         "If the IP or URL already exists, the existing record is returned."
+                         "If the IP or URL already exists, returns HTTP 409 Conflict."
              )
 async def add_geolocation(request: GeoRequest, db: AsyncSession = Depends(database.get_db)):
+    existing_entry = await get_geolocation_by_ip_or_url(db, ip_or_url=request.ip_or_url)
+    if existing_entry:
+        raise HTTPException(status_code=409, detail="Geolocation record already exists")
     data = await get_geolocation(request)
     if not data:
         raise HTTPException(status_code=400, detail="Invalid IP address or URL")
-
-    existing_entry = await get_geolocation_by_ip_or_url(db, ip_or_url=data.ip_or_url)
-    if existing_entry:
-        return existing_entry  # Avoid duplicate records
-
     return await create_geolocation(db, data)
 
 
