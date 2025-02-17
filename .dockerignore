@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.idea/
+.vscode/
+alembic/
+alembic.ini
+postgres_data/
