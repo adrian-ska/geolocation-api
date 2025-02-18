@@ -1,5 +1,5 @@
 import pytest
-from app.services.geolocation import get_geolocation, GeoRequest
+from app.services.geolocation import GeolocationService, GeoRequest
 from unittest.mock import AsyncMock, patch
 
 @pytest.mark.asyncio
@@ -14,7 +14,8 @@ async def test_get_geolocation(mock_fetch):
     }
 
     request = GeoRequest(ip_or_url="8.8.8.8")
-    data = await get_geolocation(request)
+    geolocation_service = GeolocationService()
+    data = await geolocation_service.get_geolocation(request)
 
     assert data is not None
     assert data.country == "United States"
