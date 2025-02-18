@@ -19,7 +19,7 @@ GET http://127.0.0.1:8000/geolocation?ip_or_url=8.8.8.8
 Content-Type: application/json
 
 ### Fetch by ID (GET)
-GET http://127.0.0.1:8000/geolocation?id=2
+GET http://127.0.0.1:8000/geolocation?id=1
 Content-Type: application/json
 
 ### Fetch all(GET)
@@ -28,6 +28,6 @@ Content-Type: application/json
 
 
 ### Delete only by ID (DELETE)
-DELETE http://127.0.0.1:8000/geolocation/2
+DELETE http://127.0.0.1:8000/geolocation/1
 Content-Type: application/json
 

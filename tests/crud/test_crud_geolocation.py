@@ -2,7 +2,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.crud import geolocation as crud
+from app.crud.geolocation import GeolocationCRUD
 from app.schemas import geolocation as schemas
 
 
@@ -20,7 +20,7 @@ async def test_create_geolocation_success(setup_database: AsyncSession):
         latitude="37.386",
         longitude="-122.0838"
     )
-
+    crud = GeolocationCRUD()
     created = await crud.create_geolocation(db, geolocation)
 
     assert created is not None, "Failed to create geolocation record."
@@ -41,6 +41,7 @@ async def test_get_geolocation_success(setup_database: AsyncSession):
         latitude="-27.4705",
         longitude="153.026"
     )
+    crud = GeolocationCRUD()
     await crud.create_geolocation(db, geolocation)
 
     fetched = await crud.get_geolocation_by_ip_or_url(db, "1.1.1.1")
@@ -53,7 +54,7 @@ async def test_get_geolocation_success(setup_database: AsyncSession):
 async def test_get_geolocation_fail_not_found(setup_database: AsyncSession):
     """Test retrieving a non-existent geolocation record (GET)"""
     db = setup_database
-
+    crud = GeolocationCRUD()
     fetched = await crud.get_geolocation_by_ip_or_url(db, "3.3.3.3")
 
     assert fetched is None, "Expected no data, but found a record."
@@ -73,6 +74,7 @@ async def test_delete_geolocation_success(setup_database: AsyncSession):
         latitude="52.5200",
         longitude="13.4050"
     )
+    crud = GeolocationCRUD()
     await crud.create_geolocation(db, geolocation)
 
     await crud.delete_geolocation(db, id=1)
@@ -88,6 +90,7 @@ async def test_delete_geolocation_fail_not_found(setup_database: AsyncSession):
     db = setup_database
 
     with pytest.raises(HTTPException) as exc_info:
+        crud = GeolocationCRUD()
         await crud.delete_geolocation(db, id=999)
 
     assert exc_info.value.status_code == 404
