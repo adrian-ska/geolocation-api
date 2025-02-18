@@ -1,7 +1,7 @@
 from typing import List, Union
 
 from fastapi import Depends, HTTPException, APIRouter
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.geolocation import GeolocationCRUD
@@ -28,8 +28,8 @@ async def add_geolocation(request: GeoRequest, db: AsyncSession = Depends(databa
         if not data:
             raise HTTPException(status_code=400, detail="Invalid IP address or URL")
         return await crud.create_geolocation(db, data)
-    except SQLAlchemyError:
-        raise HTTPException(status_code=503, detail="Database service is unavailable")
+    except SQLAlchemyError as exc:
+        handle_db_exception(exc)
 
 @router.get("/geolocation", response_model=Union[List[GeoLocationResponse], GeoLocationResponse],
             summary="Retrieve geolocation data",
@@ -59,8 +59,10 @@ async def get_geolocation_data(
 
         return data
 
-    except SQLAlchemyError:
-        raise HTTPException(status_code=503, detail="Database service is unavailable")
+
+    except SQLAlchemyError as exc:
+
+        handle_db_exception(exc)
 
 
 @router.delete("/geolocation/{id}",
@@ -68,13 +70,23 @@ async def get_geolocation_data(
                description="Deletes a geolocation record from the database using its unique ID. "
                            "Returns a success message if the deletion was successful."
                )
-async def delete_geolocation(db: AsyncSession = Depends(database.get_db), id: int = None,
+async def delete_geolocation(id: int, db: AsyncSession = Depends(database.get_db),
                              crud: GeolocationCRUD = Depends(GeolocationCRUD)):
     try:
-        deleted = await crud.delete_geolocation(db=db, id=id)
-        if not deleted:
+        if not await crud.delete_geolocation(db, id):
             raise HTTPException(status_code=404, detail="Data not found")
         return {"message": "Successfully deleted"}
 
-    except SQLAlchemyError:
-        raise HTTPException(status_code=503, detail="Database service is unavailable")
+
+
+    except SQLAlchemyError as exc:
+
+        handle_db_exception(exc)
+
+def handle_db_exception(exc: SQLAlchemyError):
+    if isinstance(exc, IntegrityError):
+        raise HTTPException(status_code=400, detail="Database integrity error")
+    elif isinstance(exc, OperationalError):
+        raise HTTPException(status_code=503, detail="Database connection error")
+    else:
+        raise HTTPException(status_code=500, detail="Unexpected database error")
